@@ -1,14 +1,18 @@
-from transformers import DetrForObjectDetection, DetrImageProcessor
-from PIL import Image
 import torch
+from PIL import Image
+from transformers import DetrForObjectDetection, DetrImageProcessor
+
+from app.config import DETECTOR_MODEL, DETECTOR_REVISION, MODELS_DIR
 
 # -------------------------------------------------
 # MODEL SETUP (loaded once for performance)
 # -------------------------------------------------
-MODEL_NAME = "isalia99/detr-resnet-50-sku110k"
-
-processor = DetrImageProcessor.from_pretrained(MODEL_NAME)
-model = DetrForObjectDetection.from_pretrained(MODEL_NAME)
+processor = DetrImageProcessor.from_pretrained(
+    DETECTOR_MODEL, revision=DETECTOR_REVISION, cache_dir=MODELS_DIR
+)
+model = DetrForObjectDetection.from_pretrained(
+    DETECTOR_MODEL, revision=DETECTOR_REVISION, cache_dir=MODELS_DIR
+)
 model.eval()
 
 
@@ -84,19 +88,21 @@ def detect_products(image_path: str) -> list:
     results = processor.post_process_object_detection(
         outputs,
         target_sizes=target_sizes,
-        threshold=0.8  # confidence threshold
+        threshold=0.8,  # confidence threshold
     )[0]
 
     detections = []
 
-    for score, box in zip(results["scores"], results["boxes"]):
+    for score, box in zip(results["scores"], results["boxes"], strict=True):
         x1, y1, x2, y2 = box.tolist()
 
-        detections.append({
-            "bbox": [int(x1), int(y1), int(x2), int(y2)],
-            "confidence": round(score.item(), 3),
-            "label": "product"  # SKU-110K is class-agnostic
-        })
+        detections.append(
+            {
+                "bbox": [int(x1), int(y1), int(x2), int(y2)],
+                "confidence": round(score.item(), 3),
+                "label": "product",  # SKU-110K is class-agnostic
+            }
+        )
 
     # Apply lightweight NMS to remove near-duplicate boxes
     detections = nms(detections, iou_threshold=0.5)

@@ -1,0 +1,39 @@
+[project]
+name = "shelfscan"
+version = "0.2.0"
+description = "Retail shelf product detection and visual-similarity grouping (DETR + DINOv2), CPU-first"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+# Only what the code imports. Versions match the January build so that the switch to
+# CPU-only torch is the one change (experiment S1 in the tracker).
+dependencies = [
+    "flask==3.1.2",
+    "huggingface-hub==0.36.2",
+    "numpy==2.2.6",
+    "pillow==12.0.0",
+    "scikit-learn==1.7.2",
+    "torch==2.9.1",
+    "transformers==4.57.3",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff==0.17.6"]  # CI runs the same ruff version
+
+[tool.uv]
+package = false  # an application, not a library
+
+# CPU-only torch: the CUDA build pulls about 5 GB of nvidia-* packages this target never uses.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.4.0
+
+      - name: Check the lock file is up to date
+        run: uv lock --check
+
+      - name: Lint
+        run: uvx ruff@0.17.6 check .
+
+      - name: Format check
+        run: uvx ruff@0.17.6 format --check .
+
+# Unit and integration tests arrive with step 2-4 of the hardening plan: the models
+# currently load when their modules are imported, so even pure functions can't be
+# imported in CI without downloading them.

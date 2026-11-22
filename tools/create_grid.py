@@ -1,12 +1,14 @@
-from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFont
+
 
 def create_before_after_grid(
     upload_image_path: str,
     annotated_image_path: str,
     output_path: str,
     label_height: int = 50,
-    bg_color=(255, 255, 255)
+    bg_color=(255, 255, 255),
 ):
     """
     Create a side-by-side grid image showing input and output images
@@ -43,7 +45,7 @@ def create_before_after_grid(
     # Load default font
     try:
         font = ImageFont.truetype("DejaVuSans-Bold.ttf", 24)
-    except:
+    except OSError:  # the font isn't installed
         font = ImageFont.load_default()
 
     # Draw labels
@@ -57,26 +59,18 @@ def create_before_after_grid(
 
     return str(output_path)
 
+
 if __name__ == "__main__":
-    upload_img = (
-        "data/uploads/"
-        "57c175cacce04cd89b305aa64c06f25b_Good_Quality-1993_8.jpg"
-    )
+    upload_img = "data/uploads/57c175cacce04cd89b305aa64c06f25b_Good_Quality-1993_8.jpg"
 
     annotated_img = (
-        "data/outputs/"
-        "annotated_57c175cacce04cd89b305aa64c06f25b_Good_Quality-1993_8.jpg"
+        "data/outputs/annotated_57c175cacce04cd89b305aa64c06f25b_Good_Quality-1993_8.jpg"
     )
 
-    grid_output = (
-        "data/outputs/"
-        "before_after_grid_57c175ca.jpg"
-    )
+    grid_output = "data/outputs/before_after_grid_57c175ca.jpg"
 
     create_before_after_grid(
-        upload_image_path=upload_img,
-        annotated_image_path=annotated_img,
-        output_path=grid_output
+        upload_image_path=upload_img, annotated_image_path=annotated_img, output_path=grid_output
     )
 
     print("Grid image created successfully!")

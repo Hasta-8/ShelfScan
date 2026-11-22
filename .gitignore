@@ -4,3 +4,14 @@ __pycache__/
 
 data/uploads/
 data/outputs/
+
+# uv environment and local model cache (models live in SHELFSCAN_MODELS_DIR)
+.venv/
+.cache/
+.ruff_cache/
+.pytest_cache/
+
+# Local working documents (never committed)
+report.md
+startup.md
+.env

@@ -1,16 +1,17 @@
-from PIL import Image
 import torch
-import numpy as np
+from PIL import Image
 from sklearn.cluster import AgglomerativeClustering
 from transformers import AutoImageProcessor, AutoModel
+
+from app.config import EMBEDDER_MODEL, EMBEDDER_REVISION, MODELS_DIR
 
 # -------------------------------------------------
 # DINOv2 SMALL MODEL (CPU FRIENDLY)
 # -------------------------------------------------
-MODEL_NAME = "facebook/dinov2-small"
-
-processor = AutoImageProcessor.from_pretrained(MODEL_NAME)
-model = AutoModel.from_pretrained(MODEL_NAME)
+processor = AutoImageProcessor.from_pretrained(
+    EMBEDDER_MODEL, revision=EMBEDDER_REVISION, cache_dir=MODELS_DIR
+)
+model = AutoModel.from_pretrained(EMBEDDER_MODEL, revision=EMBEDDER_REVISION, cache_dir=MODELS_DIR)
 model.eval()
 
 
@@ -71,13 +72,13 @@ def group_products(detections: list, image_path: str, similarity_threshold=0.7) 
         n_clusters=None,
         metric="cosine",
         linkage="average",
-        distance_threshold=1 - similarity_threshold
+        distance_threshold=1 - similarity_threshold,
     )
 
     labels = clustering.fit_predict(embeddings)
 
     # Assign group IDs
-    for det, group_id in zip(valid_detections, labels):
+    for det, group_id in zip(valid_detections, labels, strict=True):
         det["group_id"] = int(group_id) + 1
 
     # Any skipped detections go to group 0

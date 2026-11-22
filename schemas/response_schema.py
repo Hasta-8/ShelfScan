@@ -1,5 +1,3 @@
-from typing import List, Dict
+Detection = dict[str, object]
 
-Detection = Dict[str, object]
-
-ResponseSchema = Dict[str, object]
+ResponseSchema = dict[str, object]

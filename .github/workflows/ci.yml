@@ -25,5 +25,5 @@ jobs:
       - name: Install dependencies from the lock file (CPU-only torch)
         run: uv sync --locked
 
-      - name: Tests (no model downloads: the API tests use stand-in models)
+      - name: Tests (stand-in models, so no model downloads)
         run: uv run pytest

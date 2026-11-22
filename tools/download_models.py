@@ -16,8 +16,10 @@ from app.config import (  # noqa: E402
     DETECTOR_REVISION,
     EMBEDDER_MODEL,
     EMBEDDER_REVISION,
-    MODELS_DIR,
+    get_settings,
 )
+
+MODELS_DIR = get_settings().models_dir
 
 for repo, revision in [(DETECTOR_MODEL, DETECTOR_REVISION), (EMBEDDER_MODEL, EMBEDDER_REVISION)]:
     path = snapshot_download(

@@ -1,34 +1,28 @@
-import random
-from pathlib import Path
+"""Annotated output: one box colour per group, derived from the group ID (deterministic)."""
+
+from __future__ import annotations
+
+import colorsys
 
 from PIL import Image, ImageDraw
 
+UNGROUPED = (128, 128, 128)  # group 0: too small to embed
+_GOLDEN = 0.618033988749895
 
-def visualize(image_path: str, detections: list, output_dir: str) -> str:
-    """
-    Visualize detections on image, save annotated image.
-    Args:
-            image_path (str): Path to input image.
-            detections (list): List of detection dicts (with group_id).
-            output_dir (str): Directory to save annotated image.
-    Returns:
-            str: Path to saved annotated image.
-    """
-    img = Image.open(image_path).convert("RGB")
-    draw = ImageDraw.Draw(img)
 
-    # Assign a color to each group_id
-    group_ids = {det.get("group_id", 0) for det in detections}
-    color_map = {gid: tuple(random.choices(range(50, 256), k=3)) for gid in group_ids}
+def group_colour(group_id: int) -> tuple[int, int, int]:
+    """A stable, well-spread colour per group: golden-ratio steps around the hue circle."""
+    if group_id <= 0:
+        return UNGROUPED
+    hue = (group_id * _GOLDEN) % 1.0
+    r, g, b = colorsys.hsv_to_rgb(hue, 0.85, 0.95)
+    return int(r * 255), int(g * 255), int(b * 255)
 
+
+def annotate(image: Image.Image, detections: list[dict], width: int = 3) -> Image.Image:
+    """Return a copy of the image with each detection's box drawn in its group's colour."""
+    out = image.copy()
+    draw = ImageDraw.Draw(out)
     for det in detections:
-        bbox = det["bbox"]
-        group_id = det.get("group_id", 0)
-        color = color_map.get(group_id, (255, 0, 0))
-        draw.rectangle(bbox, outline=color, width=3)
-
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    out_path = output_dir / ("annotated_" + Path(image_path).name)
-    img.save(str(out_path))
-    return str(out_path)
+        draw.rectangle(det["bbox"], outline=group_colour(det.get("group_id", 0)), width=width)
+    return out

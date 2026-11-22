@@ -22,6 +22,8 @@ jobs:
       - name: Format check
         run: uvx ruff@0.17.6 format --check .
 
-# Unit and integration tests arrive with step 2-4 of the hardening plan: the models
-# currently load when their modules are imported, so even pure functions can't be
-# imported in CI without downloading them.
+      - name: Install dependencies from the lock file (CPU-only torch)
+        run: uv sync --locked
+
+      - name: Tests (no model downloads: the API tests use stand-in models)
+        run: uv run pytest

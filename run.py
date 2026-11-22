@@ -1,4 +1,12 @@
-from app.main import app
+"""Start the API: uv run python run.py  (http://127.0.0.1:8001, docs at /docs)."""
+
+import argparse
+
+import uvicorn
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    parser = argparse.ArgumentParser(description="ShelfScan API")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8001)
+    args = parser.parse_args()
+    uvicorn.run("app.main:create_app", factory=True, host=args.host, port=args.port)

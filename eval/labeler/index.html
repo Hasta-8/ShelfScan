@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ShelfScan grouping labeller</title>
+<style>
+  :root { --bg:#16181d; --panel:#1f2229; --line:#333844; --text:#e6e8ec; --muted:#9aa1ad; --accent:#5aa9e6; --warn:#e0a44f; --bad:#e06c6c; --ok:#6cc28f; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui, sans-serif; display:flex; flex-direction:column; height:100vh; }
+  header { display:flex; gap:14px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header .title { font-weight:700; }
+  header .muted, .muted { color:var(--muted); }
+  main { flex:1; display:flex; min-height:0; }
+  #stage { flex:1; position:relative; min-width:0; }
+  #canvas { position:absolute; inset:0; width:100%; height:100%; cursor:crosshair; }
+  aside { width:380px; border-left:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; min-height:0; }
+  #zoom { width:100%; height:220px; background:#000; border-bottom:1px solid var(--line); display:block; }
+  #groups { flex:1; overflow:auto; padding:8px; }
+  .group { display:flex; gap:8px; align-items:center; padding:6px; border:1px solid var(--line); border-radius:6px; margin-bottom:6px; cursor:pointer; }
+  .group.active { border-color:var(--accent); background:#243041; }
+  .swatch { width:16px; height:16px; border-radius:3px; flex:none; }
+  .group input { flex:1; min-width:0; background:#111317; color:var(--text); border:1px solid var(--line); border-radius:4px; padding:3px 6px; }
+  .group input.missing { border-color:var(--bad); }
+  .count { color:var(--muted); width:44px; text-align:right; flex:none; }
+  footer { padding:8px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:6px; }
+  button { background:#2b3140; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px 10px; cursor:pointer; }
+  button.primary { background:var(--accent); color:#0b1220; border:0; font-weight:600; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .keys { font-size:12px; color:var(--muted); }
+  .keys b { color:var(--text); }
+  #status { font-size:13px; }
+  #err { color:var(--bad); font-size:13px; min-height:1em; }
+  select { background:#111317; color:var(--text); border:1px solid var(--line); border-radius:4px; padding:3px; }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">Grouping labeller</span>
+  <select id="picker"></select>
+  <span id="progress" class="muted"></span>
+  <span class="keys">
+    <b>drag</b> select area · <b>click</b> toggle box · <b>shift</b> add to selection ·
+    <b>N</b> new product · <b>A</b> add to active · <b>S</b> each its own product ·
+    <b>B</b> brand for selected · <b>U</b> unsure · <b>X</b> unlabel · <b>Z</b> undo · <b>Esc</b> clear · <b>F</b> show/hide labels · <b>wheel</b> zoom · <b>right-drag</b> pan · <b>0</b> reset view
+  </span>
+</header>
+<main>
+  <div id="stage"><canvas id="canvas"></canvas></div>
+  <aside>
+    <canvas id="zoom" width="380" height="220"></canvas>
+    <div id="groups"></div>
+    <footer>
+      <div id="status"></div>
+      <div id="err"></div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap">
+        <button id="singletons" title="Each remaining unlabelled box becomes its own product">Remaining → own products</button>
+        <button id="save" class="primary">Save &amp; next</button>
+      </div>
+      <div class="keys">Rule: same product = same brand, variant/flavour and packaging (a visible size difference = different product). Unsure = can't tell (occluded, blurred, cut off).</div>
+    </footer>
+  </aside>
+</main>
+<datalist id="brandlist"></datalist>
+<script>
+const $ = (id) => document.getElementById(id);
+const canvas = $("canvas"), ctx = canvas.getContext("2d");
+const zoom = $("zoom"), zctx = zoom.getContext("2d");
+let images = [], cur = null, img = null, scale = 1, ox = 0, oy = 0;
+let boxes = [], prod = [], unsure = [], brands = {}, selected = new Set(), active = null;
+let nextId = 1, history = [], drag = null, hover = -1, showLabels = true, started = 0, prior = 0;
+let zoomK = 1, pan = null;
+
+const GOLD = 0.618033988749895;
+const colour = (g, a = 1) => `hsla(${Math.round(((g * GOLD) % 1) * 360)}, 80%, 58%, ${a})`;
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+  return r.json();
+}
+
+async function loadList(selectName) {
+  images = await api("/api/images");
+  const done = images.filter((i) => i.done).length;
+  $("progress").textContent = `${done}/${images.length} done · ${Math.round(images.reduce((s, i) => s + i.seconds, 0) / 60)} min spent`;
+  $("picker").innerHTML = images.map((i, k) =>
+    `<option value="${i.name}">${k + 1}. ${i.name} · ${i.boxes} boxes${i.done ? " ✓" : ""}</option>`).join("");
+  const target = selectName || (images.find((i) => !i.done) || images[0]).name;
+  $("picker").value = target;
+  await open(target);
+}
+
+async function open(name) {
+  const d = await api(`/api/images/${name}`);
+  cur = d; boxes = d.boxes; selected = new Set(); history = []; active = null; hover = -1;
+  prod = boxes.map(() => null); unsure = boxes.map(() => false); brands = {}; nextId = 1; prior = 0;
+  if (d.labels) {
+    for (const b of d.labels.boxes) { prod[b.id] = b.product; unsure[b.id] = b.unsure; }
+    brands = { ...d.labels.brands }; prior = d.labels.seconds || 0;
+    nextId = Math.max(0, ...prod.filter((p) => p !== null)) + 1;
+  }
+  const bl = await api("/api/brands");
+  $("brandlist").innerHTML = bl.map((b) => `<option value="${b.replace(/"/g, "&quot;")}">`).join("");
+  img = new Image();
+  img.onload = () => { started = performance.now(); fit(); draw(); renderGroups(); };
+  img.src = `/api/images/${name}/jpeg`;
+}
+
+function fit() {
+  const r = canvas.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio; canvas.height = r.height * devicePixelRatio;
+  if (!img) return;
+  zoomK = 1;
+  scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+  ox = (canvas.width - img.width * scale) / 2; oy = (canvas.height - img.height * scale) / 2;
+}
+
+canvas.addEventListener("wheel", (ev) => {
+  ev.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  const mx = (ev.clientX - r.left) * devicePixelRatio, my = (ev.clientY - r.top) * devicePixelRatio;
+  const f = Math.exp(-ev.deltaY * 0.0015), base = Math.min(canvas.width / img.width, canvas.height / img.height);
+  const next = Math.min(12, Math.max(1, zoomK * f));
+  const k = next / zoomK; zoomK = next;
+  ox = mx - (mx - ox) * k; oy = my - (my - oy) * k; scale = base * zoomK;
+  draw();
+}, { passive: false });
+canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
+
+const toScreen = ([x1, y1, x2, y2]) => [ox + x1 * scale, oy + y1 * scale, (x2 - x1) * scale, (y2 - y1) * scale];
+function toImage(ev) {
+  const r = canvas.getBoundingClientRect();
+  const x = (ev.clientX - r.left) * devicePixelRatio, y = (ev.clientY - r.top) * devicePixelRatio;
+  return [(x - ox) / scale, (y - oy) / scale];
+}
+
+function draw() {
+  if (!img) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, ox, oy, img.width * scale, img.height * scale);
+  boxes.forEach((b, i) => {
+    const [x, y, w, h] = toScreen(b);
+    if (showLabels && prod[i] !== null) { ctx.fillStyle = colour(prod[i], 0.28); ctx.fillRect(x, y, w, h); }
+    ctx.lineWidth = selected.has(i) ? 4 : (prod[i] === active && active !== null ? 3 : 1.5);
+    ctx.setLineDash(prod[i] === null && !unsure[i] ? [5, 4] : []);
+    ctx.strokeStyle = selected.has(i) ? "#ffe14d" : unsure[i] ? "#888" : prod[i] !== null && showLabels ? colour(prod[i]) : "#fff";
+    ctx.strokeRect(x, y, w, h);
+    if (unsure[i]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y + h); ctx.moveTo(x + w, y); ctx.lineTo(x, y + h); ctx.stroke(); }
+  });
+  ctx.setLineDash([]);
+  if (drag && drag.moved) {
+    ctx.strokeStyle = "#ffe14d"; ctx.lineWidth = 2;
+    const [a, b] = [drag.start, drag.end];
+    ctx.strokeRect(ox + Math.min(a[0], b[0]) * scale, oy + Math.min(a[1], b[1]) * scale, Math.abs(b[0] - a[0]) * scale, Math.abs(b[1] - a[1]) * scale);
+  }
+  status();
+}
+
+function drawZoom(i) {
+  zctx.fillStyle = "#000"; zctx.fillRect(0, 0, zoom.width, zoom.height);
+  if (i < 0 || !img) return;
+  const [x1, y1, x2, y2] = boxes[i], w = x2 - x1, h = y2 - y1, pad = 0.15;
+  const sx = x1 - w * pad, sy = y1 - h * pad, sw = w * (1 + 2 * pad), sh = h * (1 + 2 * pad);
+  const s = Math.min(zoom.width / sw, zoom.height / sh);
+  zctx.drawImage(img, sx, sy, sw, sh, (zoom.width - sw * s) / 2, (zoom.height - sh * s) / 2, sw * s, sh * s);
+  zctx.fillStyle = "#fff"; zctx.font = "12px system-ui";
+  zctx.fillText(`box ${i}` + (prod[i] !== null ? ` · product ${prod[i]} · ${brands[prod[i]] || "no brand yet"}` : unsure[i] ? " · unsure" : ""), 6, 14);
+}
+
+function boxAt(p) {
+  let best = -1, area = Infinity;
+  boxes.forEach(([x1, y1, x2, y2], i) => {
+    if (p[0] >= x1 && p[0] <= x2 && p[1] >= y1 && p[1] <= y2) {
+      const a = (x2 - x1) * (y2 - y1);
+      if (a < area) { area = a; best = i; }
+    }
+  });
+  return best;
+}
+
+canvas.addEventListener("mousedown", (ev) => {
+  if (ev.button === 2) { pan = { x: ev.clientX, y: ev.clientY, ox, oy }; return; }
+  drag = { start: toImage(ev), end: toImage(ev), moved: false, add: ev.shiftKey };
+});
+canvas.addEventListener("mousemove", (ev) => {
+  if (pan) { ox = pan.ox + (ev.clientX - pan.x) * devicePixelRatio; oy = pan.oy + (ev.clientY - pan.y) * devicePixelRatio; draw(); return; }
+  const p = toImage(ev);
+  if (drag) { drag.end = p; drag.moved ||= Math.hypot((p[0] - drag.start[0]) * scale, (p[1] - drag.start[1]) * scale) > 6; draw(); }
+  const h = boxAt(p);
+  if (h !== hover) { hover = h; drawZoom(h); }
+});
+window.addEventListener("mouseup", (ev) => {
+  if (pan) { pan = null; return; }
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.moved) {
+    const [ax, ay] = d.start, [bx, by] = d.end;
+    const [x1, x2, y1, y2] = [Math.min(ax, bx), Math.max(ax, bx), Math.min(ay, by), Math.max(ay, by)];
+    if (!d.add) selected.clear();
+    boxes.forEach(([a, b, c, e], i) => { const cx = (a + c) / 2, cy = (b + e) / 2; if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) selected.add(i); });
+  } else {
+    const i = boxAt(d.start);
+    if (i >= 0) { if (!d.add && !selected.has(i)) selected.clear(); selected.has(i) ? selected.delete(i) : selected.add(i); }
+    else if (!d.add) selected.clear();
+  }
+  draw();
+});
+
+function snapshot() { history.push({ prod: [...prod], unsure: [...unsure], brands: { ...brands }, nextId }); if (history.length > 200) history.shift(); }
+function apply(fn) { if (!selected.size) return; snapshot(); fn([...selected]); selected.clear(); cleanup(); draw(); renderGroups(); }
+function cleanup() { const used = new Set(prod.filter((p) => p !== null)); for (const k of Object.keys(brands)) if (!used.has(+k)) delete brands[k]; if (active !== null && !used.has(active)) active = null; }
+
+document.addEventListener("keydown", (ev) => {
+  if (ev.target.tagName === "INPUT") { if (ev.key === "Enter" || ev.key === "Escape") ev.target.blur(); return; }
+  const k = ev.key.toLowerCase();
+  if (k === "n") apply((ids) => { const g = nextId++; ids.forEach((i) => { prod[i] = g; unsure[i] = false; }); active = g; setTimeout(() => focusBrand(g), 0); });
+  else if (k === "a") { if (active === null) return err("No active product: press N first, or click a product on the right."); apply((ids) => ids.forEach((i) => { prod[i] = active; unsure[i] = false; })); }
+  else if (k === "s") apply((ids) => ids.forEach((i) => { prod[i] = nextId++; unsure[i] = false; }));
+  else if (k === "b") {
+    const groups = [...new Set([...selected].map((i) => prod[i]).filter((p) => p !== null))];
+    if (!groups.length) return err("Select boxes that already belong to products, then press B.");
+    const name = prompt(`Brand for ${groups.length} product(s):`, brands[groups[0]] || "");
+    if (name === null || !name.trim()) return;
+    snapshot(); groups.forEach((g) => { brands[g] = name.trim(); }); selected.clear(); draw(); renderGroups();
+  }
+  else if (k === "u") apply((ids) => ids.forEach((i) => { prod[i] = null; unsure[i] = true; }));
+  else if (k === "x") apply((ids) => ids.forEach((i) => { prod[i] = null; unsure[i] = false; }));
+  else if (k === "z") { const h = history.pop(); if (h) { ({ prod, unsure, brands, nextId } = { prod: h.prod, unsure: h.unsure, brands: h.brands, nextId: h.nextId }); cleanup(); draw(); renderGroups(); } }
+  else if (k === "escape") { selected.clear(); draw(); }
+  else if (k === "f") { showLabels = !showLabels; draw(); }
+  else if (k === "0") { fit(); draw(); }
+});
+
+function renderGroups() {
+  const counts = {};
+  prod.forEach((p) => { if (p !== null) counts[p] = (counts[p] || 0) + 1; });
+  const ids = Object.keys(counts).map(Number).sort((a, b) => b - a);
+  $("groups").innerHTML = ids.map((g) => `
+    <div class="group ${g === active ? "active" : ""}" data-g="${g}">
+      <span class="swatch" style="background:${colour(g)}"></span>
+      <input list="brandlist" placeholder="brand (or: unknown)" value="${(brands[g] || "").replace(/"/g, "&quot;")}" class="${brands[g] ? "" : "missing"}" data-g="${g}">
+      <span class="count">${counts[g]}×</span>
+    </div>`).join("") || `<div class="muted">Select boxes (drag over a row of identical products), then press N.</div>`;
+  for (const el of $("groups").querySelectorAll(".group")) el.addEventListener("click", (e) => { if (e.target.tagName !== "INPUT") { active = +el.dataset.g; renderGroups(); draw(); } });
+  for (const inp of $("groups").querySelectorAll("input")) inp.addEventListener("input", () => { brands[+inp.dataset.g] = inp.value; inp.classList.toggle("missing", !inp.value.trim()); status(); });
+}
+function focusBrand(g) { const inp = $("groups").querySelector(`input[data-g="${g}"]`); if (inp && !inp.value) inp.focus(); }
+
+function status() {
+  const unl = prod.filter((p, i) => p === null && !unsure[i]).length;
+  const groups = new Set(prod.filter((p) => p !== null));
+  const noBrand = [...groups].filter((g) => !(brands[g] || "").trim()).length;
+  $("status").innerHTML = `${boxes.length} boxes · <b>${unl}</b> unlabelled · ${unsure.filter(Boolean).length} unsure · ${groups.size} products · ${noBrand} without brand · ${selected.size} selected`;
+  $("save").disabled = unl > 0 || noBrand > 0;
+}
+function err(m) { $("err").textContent = m; setTimeout(() => { if ($("err").textContent === m) $("err").textContent = ""; }, 4000); }
+
+$("singletons").addEventListener("click", () => {
+  snapshot(); prod.forEach((p, i) => { if (p === null && !unsure[i]) prod[i] = nextId++; }); draw(); renderGroups();
+});
+$("save").addEventListener("click", async () => {
+  const seconds = prior + (performance.now() - started) / 1000;
+  const body = { boxes: boxes.map((_, i) => ({ id: i, product: prod[i], unsure: unsure[i] })), brands, seconds };
+  try {
+    await api(`/api/images/${cur.name}/labels`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const idx = images.findIndex((i) => i.name === cur.name);
+    const next = images.slice(idx + 1).find((i) => !i.done) || images.find((i) => !i.done && i.name !== cur.name);
+    await loadList(next ? next.name : cur.name);
+  } catch (e) { err(e.message); }
+});
+$("picker").addEventListener("change", (e) => open(e.target.value));
+window.addEventListener("resize", () => { fit(); draw(); });
+loadList();
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+ "rule": "random.Random(20261122).sample of the 24 among SKU-110K test shard 0 images with <= 130 annotated boxes; then shuffled and split 12/12",
+ "eligible_images": 173,
+ "tune": [
+  "test_101.jpg",
+  "test_104.jpg",
+  "test_1089.jpg",
+  "test_1132.jpg",
+  "test_1157.jpg",
+  "test_117.jpg",
+  "test_1239.jpg",
+  "test_1292.jpg",
+  "test_1311.jpg",
+  "test_1336.jpg",
+  "test_1343.jpg",
+  "test_1368.jpg"
+ ],
+ "test": [
+  "test_1020.jpg",
+  "test_1134.jpg",
+  "test_1146.jpg",
+  "test_1209.jpg",
+  "test_1217.jpg",
+  "test_1220.jpg",
+  "test_1226.jpg",
+  "test_1256.jpg",
+  "test_127.jpg",
+  "test_1275.jpg",
+  "test_1279.jpg",
+  "test_1286.jpg"
+ ],
+ "boxes": {
+  "tune": 1387,
+  "test": 1348
+ }
+}

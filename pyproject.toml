@@ -25,6 +25,10 @@ dev = [
     "pytest>=8",
     "ruff==0.17.6",
 ]  # CI runs the same ruff version
+eval = [
+    "pyarrow>=26.0.1",
+    "pycocotools>=2.0.11",
+]
 
 [tool.uv]
 package = false  # an application, not a library

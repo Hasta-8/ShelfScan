@@ -15,3 +15,6 @@ data/outputs/
 report.md
 startup.md
 .env
+
+# Grouping labels on SKU-110K images (licence: no redistribution)
+eval/labels/

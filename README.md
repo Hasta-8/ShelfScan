@@ -11,9 +11,8 @@ different brands can share a group, and variants of one product can be split.
 There is no OCR and no product catalogue.
 
 > **Status:** the pipeline runs end to end behind a hardened FastAPI service, with
-> tests in CI. It has **not yet been evaluated**: there are no detection or grouping
-> metrics yet, so nothing below claims accuracy. Evaluation, Docker and a demo are
-> next (see the status table).
+> tests in CI. **Detection is evaluated** (below); **grouping is not yet**, so nothing
+> here claims grouping accuracy. Grouping evaluation, Docker and a demo are next.
 
 ## How it works
 
@@ -49,7 +48,8 @@ defaults. They have not been tuned or measured yet; a sensitivity study is plann
 | EXIF orientation: phone photos stored sideways are processed upright | IMPLEMENTED |
 | Unit and API tests in CI (stand-in models), lint, lock-file check | IMPLEMENTED |
 | Reproducible CPU-only setup: uv lock file, pinned model revisions, shared model folder | IMPLEMENTED |
-| Detection metrics (precision, recall, mAP) and grouping metrics (pairwise F1, ARI) on labelled images | PLANNED |
+| Detection metrics (COCO AP, precision, recall) on SKU-110K test images | IMPLEMENTED (`eval/detection.py`) |
+| Grouping metrics (pairwise F1, ARI) on hand-labelled images; labelling tool | IN PROGRESS (tool built, labelling pending) |
 | Threshold sensitivity study, failure gallery | PLANNED |
 | Docker, demo, recorded fallback | PLANNED |
 ## Quick start
@@ -119,6 +119,33 @@ include a stack trace or a file path:
 | 415 | `unsupported_type` | Not an image, or not JPEG/PNG/WebP (checked from the bytes, not the file name) |
 | 422 | `corrupt_image`, `too_small`, `empty_file`, `invalid_request` | Truncated or malformed file, a side under 64 px, empty upload, no `file` field |
 | 503 | `not_ready`, `busy` | Models still loading; another image is being processed |
+## Detection quality (measured)
+
+On 420 held-out SKU-110K **test** images (61,461 annotated products, median 137 per
+image; one of seven test shards, all its images). The detector was fine-tuned on
+SKU-110K's training split. Scored with pycocotools; `uv run --group eval python
+eval/detection.py <shard.parquet>`.
+
+| Metric | Value |
+|---|---|
+| COCO AP@[.5:.95], up to 400 detections per image | **0.425** |
+| AP50 / AP75 | 0.813 / 0.409 |
+| Recall@400 (averaged over IoU 0.5–0.95) | 0.510 |
+| At the deployed 0.8 confidence, IoU 0.5: precision / recall / F1 | **0.766 / 0.837 / 0.800** |
+| Detection time per image (median / p95) | 2.9 s / 3.8 s |
+
+- The model card reports 58.9 mAP on SKU-110K's validation split (torchmetrics); the
+  same protocol isn't stated in enough detail to reproduce, and our AP with COCO's
+  default 100-detection cap is 0.333. These are our numbers, not the card's.
+- **Precision is understated:** some products in SKU-110K aren't annotated (often a
+  whole top shelf), so correct detections of them count as false positives.
+- Up to 400 detections per image are scored because the shelves are dense; COCO's
+  default cap of 100 would cut recall artificially.
+- Re-encoding the images as JPEG (quality 85) changed AP by +0.0002 over 50 images:
+  the single-image sensitivity under Limitations averages out.
+- The images can't be shown here: SKU-110K's licence allows non-commercial use only,
+  without redistribution.
+
 ## Performance (measured)
 
 On a 4-core Intel i5-10210U laptop CPU, 10 distinct sample shelf photos:
@@ -150,7 +177,7 @@ through the new API.
   annotated image (group colours are derived from the group ID).
 ## Limitations
 
-- **No evaluation yet:** detection and grouping quality are unmeasured.
+- **Grouping quality is unmeasured** (labelling in progress). Detection is measured on SKU-110K test images only; other stores, cameras and lighting may differ.
 - **Grouping looks over-split** on dense shelves: the busiest sample has 254
   products in 121 groups. Whether that is wrong depends on labels that don't exist
   yet.

@@ -54,7 +54,7 @@ the sweep (see Grouping quality).
 | Detection metrics (COCO AP, precision, recall) on SKU-110K test images | IMPLEMENTED (`eval/detection.py`) |
 | Grouping metrics (pairwise F1, ARI) on hand-labelled images; labelling tool | IMPLEMENTED (`eval/grouping.py`, `eval/labeler/`) |
 | Threshold sensitivity study (confidence, NMS IoU, similarity) | IMPLEMENTED (`eval/detection_sweep.py`, `eval/grouping.py`) |
-| Failure gallery | PLANNED |
+| Failure gallery (openly licensed photos) | IMPLEMENTED ([docs/failures.md](docs/failures.md)) |
 | Docker, demo, recorded fallback | PLANNED |
 ## Quick start
 
@@ -170,6 +170,8 @@ is how many of the true same-product pairs it finds.
 
 All 14 images. Mean adjusted Rand index at 0.7: 0.26.
 
+- **See it:** the [failure gallery](docs/failures.md) shows the typical errors on
+  real shelf photos, with likely causes.
 - **Weak at every threshold:** no setting gets pairwise F1 much above 0.3. Lowering
   the threshold merges more true pairs but merges different products at the same
   rate. DINOv2's overall-appearance embedding doesn't separate products that differ
@@ -223,7 +225,9 @@ through the new API.
   quality); treat groups as a rough visual hint, not a count of distinct products.
   Measured on 14 images of up to ~130 products each, labelled by one person.
 - Both evaluations use SKU-110K test images only; other stores, cameras and
-  lighting may differ.
+  lighting may differ. The [failure gallery](docs/failures.md) shows photos from
+  elsewhere: price tags detected as products, transparent and loose-packed goods,
+  and steep viewing angles all fail.
 - **Visual similarity is not identity:** lookalike packaging from different brands
   can be grouped together, and variants of one product (flavours, sizes) can be split.
 - **Sensitive to re-compression:** re-saving the same photo as JPEG (quality 95)
@@ -240,6 +244,8 @@ services/     detection/, grouping/, visualization/, images.py (upload decoding)
 schemas/      API request/response models
 tests/        unit tests and API tests (stand-in models, no downloads)
 tools/        download_models.py, create_grid.py (before/after image)
+docs/failures.md            failure gallery (images in docs/failures/, openly licensed)
+eval/         evaluation scripts, results (metrics only), labelling tool
 docs/original-submission/   the January 2026 write-up and JSON format notes
 ```
 

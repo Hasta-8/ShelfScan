@@ -61,6 +61,40 @@ def test_infer_returns_the_contract(make_client):
     assert isinstance(body["settings"]["torch_threads"], int)
 
 
+def test_explain_adds_neighbours_only_when_asked(make_client):
+    client = make_client()
+    r = client.post(
+        "/v1/infer", params={"explain": "true"}, files={"file": ("s.jpg", encode(shelf_image()))}
+    )
+    assert r.status_code == 200, r.text
+    dets = r.json()["detections"]
+    assert dets[0]["neighbours"] == [{"index": 1, "similarity": 0.5}]
+    assert "neighbours" not in dets[2]  # group 0: too small to embed
+    plain = infer(client, encode(shelf_image())).json()["detections"][0]
+    assert "neighbours" not in plain and "group_similarity" not in plain
+
+
+def test_demo_page_and_samples_are_served(make_client):
+    client = make_client()
+    page = client.get("/")
+    assert page.status_code == 200 and "ShelfScan demo" in page.text
+    manifest = client.get("/samples/samples.json")
+    assert manifest.status_code == 200
+    for s in manifest.json():
+        assert client.get(f"/{s['image']}").headers["content-type"] == "image/jpeg"
+        result = client.get(f"/{s['result']}").json()
+        assert result["products"] == len(result["detections"]) == s["products"]
+        assert client.get("/" + result["annotated_image_url"]).status_code == 200
+        assert s["credit"]["licence"].startswith("CC")
+    assert client.get("/samples/../app/config.py").status_code == 404
+
+
+def test_root_redirects_to_docs_without_the_demo(make_client, tmp_path):
+    client = make_client(demo_dir=tmp_path)
+    r = client.get("/", follow_redirects=False)
+    assert r.status_code == 307 and r.headers["location"] == "/docs"
+
+
 def test_annotated_image_is_served_and_deterministic(make_client):
     client = make_client()
     urls = [infer(client, encode(shelf_image())).json()["annotated_image_url"] for _ in range(2)]

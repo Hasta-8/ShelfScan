@@ -45,6 +45,18 @@ def test_cluster_groups_similar_vectors_and_handles_tiny_inputs():
     assert cluster(e[:0], 0.9).tolist() == []
 
 
+def test_explain_lists_nearest_crops_and_group_similarity():
+    from services.grouping.grouper import explain
+
+    e = np.array([[1, 0], [0.8, 0.6], [0, 1]], dtype=float)  # unit vectors
+    out = explain(e, np.array([1, 1, 2]), k=5)
+    assert [j for j, _ in out[0]["neighbours"]] == [1, 2]  # most similar first, never itself
+    assert out[0]["neighbours"][0][1] == 0.8
+    assert out[0]["group_similarity"] == 0.8  # average over the rest of its group
+    assert out[2]["group_similarity"] is None  # alone in its group
+    assert explain(np.zeros((0, 2)), np.zeros(0, dtype=int)) == []
+
+
 def test_group_colours_are_stable_and_distinct():
     assert group_colour(0) == UNGROUPED and group_colour(-1) == UNGROUPED
     assert group_colour(3) == group_colour(3)

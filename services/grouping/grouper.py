@@ -30,6 +30,29 @@ def cluster(embeddings: np.ndarray, similarity_threshold: float) -> np.ndarray:
     return clustering.fit_predict(embeddings) + 1
 
 
+def explain(embeddings: np.ndarray, labels: np.ndarray, k: int = 5) -> list[dict]:
+    """Why each crop is in its group: its k most similar other crops (cosine similarity,
+    as row indices) and its average similarity to the rest of its group (None if alone).
+    Average linkage merges groups on average similarity, so the second number is the one
+    the threshold acts on; a single close neighbour isn't enough."""
+    n = len(embeddings)
+    if n == 0:
+        return []
+    sims = embeddings @ embeddings.T
+    np.fill_diagonal(sims, -np.inf)
+    out = []
+    for i in range(n):
+        order = np.argsort(-sims[i], kind="stable")[: min(k, n - 1)]
+        same = (labels == labels[i]) & (np.arange(n) != i)
+        out.append(
+            {
+                "neighbours": [(int(j), round(float(sims[i, j]), 4)) for j in order],
+                "group_similarity": round(float(sims[i, same].mean()), 4) if same.any() else None,
+            }
+        )
+    return out
+
+
 class Grouper:
     def __init__(self, model_name: str, revision: str, cache_dir: Path) -> None:
         from transformers import AutoImageProcessor, AutoModel
@@ -55,19 +78,32 @@ class Grouper:
         detections: list[dict],
         similarity_threshold: float = 0.7,
         min_crop_px: int = 20,
+        explain_k: int = 0,
     ) -> list[dict]:
-        """Add ``group_id`` to each detection; boxes too small to embed get group 0."""
-        crops, valid = [], []
-        for det in detections:
+        """Add ``group_id`` to each detection; boxes too small to embed get group 0.
+
+        With ``explain_k`` > 0, embedded detections also get ``neighbours`` (their
+        ``explain_k`` most similar detections, as indices into ``detections``, with the
+        cosine similarity) and ``group_similarity`` (see ``explain``)."""
+        crops, valid, index = [], [], []
+        for i, det in enumerate(detections):
             x1, y1, x2, y2 = det["bbox"]
             if (x2 - x1) < min_crop_px or (y2 - y1) < min_crop_px:
                 continue
             crops.append(image.crop((x1, y1, x2, y2)))
             valid.append(det)
+            index.append(i)
         for det in detections:
             det["group_id"] = 0
         if crops:
-            labels = cluster(self.embed(crops), similarity_threshold)
+            emb = self.embed(crops)
+            labels = cluster(emb, similarity_threshold)
             for det, gid in zip(valid, labels, strict=True):
                 det["group_id"] = int(gid)
+            if explain_k:
+                for det, why in zip(valid, explain(emb, labels, explain_k), strict=True):
+                    det["neighbours"] = [
+                        {"index": index[j], "similarity": s} for j, s in why["neighbours"]
+                    ]
+                    det["group_similarity"] = why["group_similarity"]
         return detections

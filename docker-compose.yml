@@ -1,0 +1,16 @@
+# One-command run of the API and demo page: `docker compose up --build`, then
+# http://127.0.0.1:8001 (published on this machine only). Needs the two models on the
+# host in Hugging Face cache layout (uv run python tools/download_models.py), in
+# SHELFSCAN_MODELS_HOST_DIR (default: ../ai_models/huggingface).
+services:
+  shelfscan:
+    build: .
+    image: shelfscan:0.3
+    ports:
+      - "127.0.0.1:8001:8001"
+    environment:
+      SHELFSCAN_MODELS_DIR: /models
+      SHELFSCAN_TORCH_THREADS: ${SHELFSCAN_TORCH_THREADS:-4}
+    volumes:
+      - ${SHELFSCAN_MODELS_HOST_DIR:-../ai_models/huggingface}:/models:ro
+    restart: unless-stopped

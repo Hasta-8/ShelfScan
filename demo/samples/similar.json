@@ -1,0 +1,913 @@
+{
+ "request_id": "precomputed",
+ "image": {
+  "format": "JPEG",
+  "width": 1920,
+  "height": 1440,
+  "exif_orientation": 1
+ },
+ "detections": [
+  {
+   "bbox": [
+    1446,
+    0,
+    1700,
+    309
+   ],
+   "confidence": 0.998,
+   "label": "product",
+   "group_id": 7,
+   "neighbours": [
+    {
+     "index": 11,
+     "similarity": 0.7196
+    },
+    {
+     "index": 9,
+     "similarity": 0.7129
+    },
+    {
+     "index": 1,
+     "similarity": 0.7039
+    },
+    {
+     "index": 16,
+     "similarity": 0.6858
+    },
+    {
+     "index": 5,
+     "similarity": 0.6267
+    }
+   ],
+   "group_similarity": 0.6908
+  },
+  {
+   "bbox": [
+    1183,
+    2,
+    1415,
+    302
+   ],
+   "confidence": 0.997,
+   "label": "product",
+   "group_id": 7,
+   "neighbours": [
+    {
+     "index": 5,
+     "similarity": 0.8636
+    },
+    {
+     "index": 0,
+     "similarity": 0.7039
+    },
+    {
+     "index": 9,
+     "similarity": 0.6792
+    },
+    {
+     "index": 11,
+     "similarity": 0.577
+    },
+    {
+     "index": 12,
+     "similarity": 0.5327
+    }
+   ],
+   "group_similarity": 0.7059
+  },
+  {
+   "bbox": [
+    955,
+    928,
+    1126,
+    1224
+   ],
+   "confidence": 0.997,
+   "label": "product",
+   "group_id": 5,
+   "neighbours": [
+    {
+     "index": 4,
+     "similarity": 0.8853
+    },
+    {
+     "index": 8,
+     "similarity": 0.6851
+    },
+    {
+     "index": 16,
+     "similarity": 0.6333
+    },
+    {
+     "index": 20,
+     "similarity": 0.6281
+    },
+    {
+     "index": 10,
+     "similarity": 0.6163
+    }
+   ],
+   "group_similarity": 0.7346
+  },
+  {
+   "bbox": [
+    1751,
+    8,
+    1918,
+    307
+   ],
+   "confidence": 0.997,
+   "label": "product",
+   "group_id": 3,
+   "neighbours": [
+    {
+     "index": 19,
+     "similarity": 0.6151
+    },
+    {
+     "index": 0,
+     "similarity": 0.6106
+    },
+    {
+     "index": 6,
+     "similarity": 0.5919
+    },
+    {
+     "index": 15,
+     "similarity": 0.5875
+    },
+    {
+     "index": 16,
+     "similarity": 0.5794
+    }
+   ],
+   "group_similarity": 0.6151
+  },
+  {
+   "bbox": [
+    718,
+    955,
+    891,
+    1181
+   ],
+   "confidence": 0.996,
+   "label": "product",
+   "group_id": 5,
+   "neighbours": [
+    {
+     "index": 2,
+     "similarity": 0.8853
+    },
+    {
+     "index": 16,
+     "similarity": 0.7317
+    },
+    {
+     "index": 8,
+     "similarity": 0.7014
+    },
+    {
+     "index": 9,
+     "similarity": 0.6091
+    },
+    {
+     "index": 0,
+     "similarity": 0.5988
+    }
+   ],
+   "group_similarity": 0.7728
+  },
+  {
+   "bbox": [
+    912,
+    0,
+    1165,
+    298
+   ],
+   "confidence": 0.995,
+   "label": "product",
+   "group_id": 7,
+   "neighbours": [
+    {
+     "index": 1,
+     "similarity": 0.8636
+    },
+    {
+     "index": 0,
+     "similarity": 0.6267
+    },
+    {
+     "index": 9,
+     "similarity": 0.623
+    },
+    {
+     "index": 16,
+     "similarity": 0.5085
+    },
+    {
+     "index": 11,
+     "similarity": 0.4968
+    }
+   ],
+   "group_similarity": 0.6525
+  },
+  {
+   "bbox": [
+    70,
+    424,
+    304,
+    805
+   ],
+   "confidence": 0.992,
+   "label": "product",
+   "group_id": 4,
+   "neighbours": [
+    {
+     "index": 22,
+     "similarity": 0.8865
+    },
+    {
+     "index": 18,
+     "similarity": 0.8736
+    },
+    {
+     "index": 17,
+     "similarity": 0.8561
+    },
+    {
+     "index": 20,
+     "similarity": 0.8384
+    },
+    {
+     "index": 15,
+     "similarity": 0.7813
+    }
+   ],
+   "group_similarity": 0.8327
+  },
+  {
+   "bbox": [
+    1459,
+    1001,
+    1606,
+    1375
+   ],
+   "confidence": 0.99,
+   "label": "product",
+   "group_id": 2,
+   "neighbours": [
+    {
+     "index": 12,
+     "similarity": 0.7192
+    },
+    {
+     "index": 13,
+     "similarity": 0.5872
+    },
+    {
+     "index": 16,
+     "similarity": 0.5426
+    },
+    {
+     "index": 0,
+     "similarity": 0.5396
+    },
+    {
+     "index": 9,
+     "similarity": 0.527
+    }
+   ],
+   "group_similarity": 0.6532
+  },
+  {
+   "bbox": [
+    237,
+    933,
+    432,
+    1236
+   ],
+   "confidence": 0.99,
+   "label": "product",
+   "group_id": 5,
+   "neighbours": [
+    {
+     "index": 16,
+     "similarity": 0.7309
+    },
+    {
+     "index": 20,
+     "similarity": 0.7144
+    },
+    {
+     "index": 10,
+     "similarity": 0.7138
+    },
+    {
+     "index": 4,
+     "similarity": 0.7014
+    },
+    {
+     "index": 2,
+     "similarity": 0.6851
+    }
+   ],
+   "group_similarity": 0.7058
+  },
+  {
+   "bbox": [
+    297,
+    1,
+    569,
+    257
+   ],
+   "confidence": 0.99,
+   "label": "product",
+   "group_id": 7,
+   "neighbours": [
+    {
+     "index": 11,
+     "similarity": 0.7433
+    },
+    {
+     "index": 0,
+     "similarity": 0.7129
+    },
+    {
+     "index": 1,
+     "similarity": 0.6792
+    },
+    {
+     "index": 21,
+     "similarity": 0.6243
+    },
+    {
+     "index": 5,
+     "similarity": 0.623
+    }
+   ],
+   "group_similarity": 0.6896
+  },
+  {
+   "bbox": [
+    1629,
+    504,
+    1780,
+    888
+   ],
+   "confidence": 0.99,
+   "label": "product",
+   "group_id": 4,
+   "neighbours": [
+    {
+     "index": 20,
+     "similarity": 0.8858
+    },
+    {
+     "index": 22,
+     "similarity": 0.8189
+    },
+    {
+     "index": 18,
+     "similarity": 0.8153
+    },
+    {
+     "index": 6,
+     "similarity": 0.7601
+    },
+    {
+     "index": 15,
+     "similarity": 0.7396
+    }
+   ],
+   "group_similarity": 0.7843
+  },
+  {
+   "bbox": [
+    592,
+    -3,
+    841,
+    285
+   ],
+   "confidence": 0.986,
+   "label": "product",
+   "group_id": 7,
+   "neighbours": [
+    {
+     "index": 9,
+     "similarity": 0.7433
+    },
+    {
+     "index": 0,
+     "similarity": 0.7196
+    },
+    {
+     "index": 6,
+     "similarity": 0.5898
+    },
+    {
+     "index": 22,
+     "similarity": 0.5771
+    },
+    {
+     "index": 1,
+     "similarity": 0.577
+    }
+   ],
+   "group_similarity": 0.6342
+  },
+  {
+   "bbox": [
+    1740,
+    990,
+    1901,
+    1382
+   ],
+   "confidence": 0.985,
+   "label": "product",
+   "group_id": 2,
+   "neighbours": [
+    {
+     "index": 7,
+     "similarity": 0.7192
+    },
+    {
+     "index": 13,
+     "similarity": 0.6598
+    },
+    {
+     "index": 14,
+     "similarity": 0.5489
+    },
+    {
+     "index": 1,
+     "similarity": 0.5327
+    },
+    {
+     "index": 16,
+     "similarity": 0.5047
+    }
+   ],
+   "group_similarity": 0.6895
+  },
+  {
+   "bbox": [
+    1614,
+    992,
+    1745,
+    1381
+   ],
+   "confidence": 0.973,
+   "label": "product",
+   "group_id": 2,
+   "neighbours": [
+    {
+     "index": 12,
+     "similarity": 0.6598
+    },
+    {
+     "index": 7,
+     "similarity": 0.5872
+    },
+    {
+     "index": 5,
+     "similarity": 0.4819
+    },
+    {
+     "index": 16,
+     "similarity": 0.4809
+    },
+    {
+     "index": 1,
+     "similarity": 0.4781
+    }
+   ],
+   "group_similarity": 0.6235
+  },
+  {
+   "bbox": [
+    1306,
+    1019,
+    1460,
+    1250
+   ],
+   "confidence": 0.972,
+   "label": "product",
+   "group_id": 1,
+   "neighbours": [
+    {
+     "index": 23,
+     "similarity": 0.6051
+    },
+    {
+     "index": 24,
+     "similarity": 0.5598
+    },
+    {
+     "index": 12,
+     "similarity": 0.5489
+    },
+    {
+     "index": 7,
+     "similarity": 0.517
+    },
+    {
+     "index": 1,
+     "similarity": 0.4047
+    }
+   ],
+   "group_similarity": 0.6051
+  },
+  {
+   "bbox": [
+    1257,
+    443,
+    1448,
+    821
+   ],
+   "confidence": 0.971,
+   "label": "product",
+   "group_id": 4,
+   "neighbours": [
+    {
+     "index": 18,
+     "similarity": 0.8354
+    },
+    {
+     "index": 22,
+     "similarity": 0.8167
+    },
+    {
+     "index": 17,
+     "similarity": 0.7986
+    },
+    {
+     "index": 6,
+     "similarity": 0.7813
+    },
+    {
+     "index": 20,
+     "similarity": 0.7713
+    }
+   ],
+   "group_similarity": 0.7905
+  },
+  {
+   "bbox": [
+    93,
+    919,
+    236,
+    1111
+   ],
+   "confidence": 0.969,
+   "label": "product",
+   "group_id": 5,
+   "neighbours": [
+    {
+     "index": 4,
+     "similarity": 0.7317
+    },
+    {
+     "index": 8,
+     "similarity": 0.7309
+    },
+    {
+     "index": 0,
+     "similarity": 0.6858
+    },
+    {
+     "index": 2,
+     "similarity": 0.6333
+    },
+    {
+     "index": 10,
+     "similarity": 0.6314
+    }
+   ],
+   "group_similarity": 0.6986
+  },
+  {
+   "bbox": [
+    355,
+    433,
+    555,
+    813
+   ],
+   "confidence": 0.967,
+   "label": "product",
+   "group_id": 4,
+   "neighbours": [
+    {
+     "index": 22,
+     "similarity": 0.8567
+    },
+    {
+     "index": 6,
+     "similarity": 0.8561
+    },
+    {
+     "index": 18,
+     "similarity": 0.8214
+    },
+    {
+     "index": 15,
+     "similarity": 0.7986
+    },
+    {
+     "index": 20,
+     "similarity": 0.767
+    }
+   ],
+   "group_similarity": 0.7976
+  },
+  {
+   "bbox": [
+    1014,
+    439,
+    1225,
+    826
+   ],
+   "confidence": 0.95,
+   "label": "product",
+   "group_id": 4,
+   "neighbours": [
+    {
+     "index": 22,
+     "similarity": 0.8938
+    },
+    {
+     "index": 6,
+     "similarity": 0.8736
+    },
+    {
+     "index": 20,
+     "similarity": 0.8473
+    },
+    {
+     "index": 15,
+     "similarity": 0.8354
+    },
+    {
+     "index": 17,
+     "similarity": 0.8214
+    }
+   ],
+   "group_similarity": 0.8478
+  },
+  {
+   "bbox": [
+    0,
+    418,
+    106,
+    716
+   ],
+   "confidence": 0.93,
+   "label": "product",
+   "group_id": 3,
+   "neighbours": [
+    {
+     "index": 3,
+     "similarity": 0.6151
+    },
+    {
+     "index": 6,
+     "similarity": 0.6109
+    },
+    {
+     "index": 10,
+     "similarity": 0.6107
+    },
+    {
+     "index": 20,
+     "similarity": 0.5619
+    },
+    {
+     "index": 8,
+     "similarity": 0.5548
+    }
+   ],
+   "group_similarity": 0.6151
+  },
+  {
+   "bbox": [
+    1484,
+    486,
+    1655,
+    889
+   ],
+   "confidence": 0.928,
+   "label": "product",
+   "group_id": 4,
+   "neighbours": [
+    {
+     "index": 22,
+     "similarity": 0.9011
+    },
+    {
+     "index": 10,
+     "similarity": 0.8858
+    },
+    {
+     "index": 18,
+     "similarity": 0.8473
+    },
+    {
+     "index": 6,
+     "similarity": 0.8384
+    },
+    {
+     "index": 15,
+     "similarity": 0.7713
+    }
+   ],
+   "group_similarity": 0.8352
+  },
+  {
+   "bbox": [
+    1,
+    2,
+    154,
+    222
+   ],
+   "confidence": 0.925,
+   "label": "product",
+   "group_id": 8,
+   "neighbours": [
+    {
+     "index": 9,
+     "similarity": 0.6243
+    },
+    {
+     "index": 11,
+     "similarity": 0.5751
+    },
+    {
+     "index": 0,
+     "similarity": 0.4498
+    },
+    {
+     "index": 15,
+     "similarity": 0.4197
+    },
+    {
+     "index": 19,
+     "similarity": 0.3868
+    }
+   ]
+  },
+  {
+   "bbox": [
+    801,
+    439,
+    1003,
+    834
+   ],
+   "confidence": 0.92,
+   "label": "product",
+   "group_id": 4,
+   "neighbours": [
+    {
+     "index": 20,
+     "similarity": 0.9011
+    },
+    {
+     "index": 18,
+     "similarity": 0.8938
+    },
+    {
+     "index": 6,
+     "similarity": 0.8865
+    },
+    {
+     "index": 17,
+     "similarity": 0.8567
+    },
+    {
+     "index": 10,
+     "similarity": 0.8189
+    }
+   ],
+   "group_similarity": 0.8623
+  },
+  {
+   "bbox": [
+    1304,
+    1045,
+    1444,
+    1402
+   ],
+   "confidence": 0.87,
+   "label": "product",
+   "group_id": 1,
+   "neighbours": [
+    {
+     "index": 14,
+     "similarity": 0.6051
+    },
+    {
+     "index": 7,
+     "similarity": 0.5267
+    },
+    {
+     "index": 13,
+     "similarity": 0.4762
+    },
+    {
+     "index": 12,
+     "similarity": 0.4157
+    },
+    {
+     "index": 1,
+     "similarity": 0.3946
+    }
+   ],
+   "group_similarity": 0.6051
+  },
+  {
+   "bbox": [
+    1216,
+    921,
+    1369,
+    1071
+   ],
+   "confidence": 0.8,
+   "label": "product",
+   "group_id": 6,
+   "neighbours": [
+    {
+     "index": 14,
+     "similarity": 0.5598
+    },
+    {
+     "index": 12,
+     "similarity": 0.4033
+    },
+    {
+     "index": 19,
+     "similarity": 0.2486
+    },
+    {
+     "index": 13,
+     "similarity": 0.2393
+    },
+    {
+     "index": 5,
+     "similarity": 0.236
+    }
+   ]
+  }
+ ],
+ "products": 25,
+ "groups": [
+  {
+   "group_id": 4,
+   "count": 7
+  },
+  {
+   "group_id": 7,
+   "count": 5
+  },
+  {
+   "group_id": 5,
+   "count": 4
+  },
+  {
+   "group_id": 2,
+   "count": 3
+  },
+  {
+   "group_id": 3,
+   "count": 2
+  },
+  {
+   "group_id": 1,
+   "count": 2
+  },
+  {
+   "group_id": 8,
+   "count": 1
+  },
+  {
+   "group_id": 6,
+   "count": 1
+  }
+ ],
+ "annotated_image_url": "samples/similar-annotated.jpg",
+ "timings": {
+  "decode_ms": 45.7,
+  "detect_ms": 1685.7,
+  "group_ms": 2687.2,
+  "annotate_ms": 40.4,
+  "total_ms": 4459.1
+ },
+ "models": {
+  "detector": "is36e/detr-resnet-50-sku110k@79e15d3",
+  "embedder": "facebook/dinov2-small@ed25f3a"
+ },
+ "settings": {
+  "confidence_threshold": 0.8,
+  "nms_iou": 0.5,
+  "similarity_threshold": 0.6,
+  "min_crop_px": 20,
+  "torch_threads": 4
+ }
+}

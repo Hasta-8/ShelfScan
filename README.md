@@ -13,7 +13,12 @@ There is no OCR and no product catalogue.
 > **Status:** the pipeline runs end to end behind a hardened FastAPI service, with
 > tests in CI. **Detection and grouping are both evaluated** (below). Detection is
 > solid; **grouping is weak** (pairwise F1 about 0.3 against hand labels), and the
-> numbers say so. Docker and a demo are next.
+> numbers say so. It ships with a demo page and a Docker setup.
+
+![The demo page: a honey jar selected, with its most similar crops and their cosine similarity](docs/screenshots/demo-why-this-group.jpg)
+
+*The demo page. One honey jar is selected; its five most similar crops are other Dutch
+Gold varieties, at similarity 0.78–0.89, so different products end up in one group.*
 
 ## How it works
 
@@ -55,7 +60,9 @@ the sweep (see Grouping quality).
 | Grouping metrics (pairwise F1, ARI) on hand-labelled images; labelling tool | IMPLEMENTED (`eval/grouping.py`, `eval/labeler/`) |
 | Threshold sensitivity study (confidence, NMS IoU, similarity) | IMPLEMENTED (`eval/detection_sweep.py`, `eval/grouping.py`) |
 | Failure gallery (openly licensed photos) | IMPLEMENTED ([docs/failures.md](docs/failures.md)) |
-| Docker, demo, recorded fallback | PLANNED |
+| Demo page: three fixed samples (precomputed + live), your own upload, "why this group" view | IMPLEMENTED (`demo/`) |
+| Docker: CPU-only image, models mounted read-only, non-root, health check | IMPLEMENTED (`Dockerfile`, `docker-compose.yml`) |
+| Recorded demo video (fallback) | PLANNED |
 ## Quick start
 
 Needs Python 3.12 and [uv](https://docs.astral.sh/uv/). Everything runs on the CPU;
@@ -65,7 +72,7 @@ no GPU or CUDA is used.
 uv sync                                    # CPU-only torch, versions from uv.lock
 export SHELFSCAN_MODELS_DIR=~/models/hf    # where model files go (default: .cache/models)
 uv run python tools/download_models.py     # both models at their pinned revisions (~245 MB)
-uv run python run.py                       # http://127.0.0.1:8001, docs at /docs
+uv run python run.py                       # demo page at http://127.0.0.1:8001, API docs at /docs
 ```
 
 ```bash
@@ -79,14 +86,57 @@ file: thresholds, `TORCH_THREADS` (default 4), upload limits (`MAX_UPLOAD_MB` 15
 `MAX_PIXELS` 40 million, `MIN_SIDE_PX` 64). See `app/config.py`.
 
 Tests need no models (the API tests use stand-ins): `uv run pytest`.
+
+## Demo
+
+Open http://127.0.0.1:8001 once the server runs. The page is served by the API
+itself (`demo/index.html`, no build step):
+
+- **Three fixed samples:** easy (boxed snacks, face-on), crowded (about 300 soup
+  cans) and similar packaging (honey and syrup in lookalike bottles). Their results
+  are precomputed by the same API (`tools/build_demo_samples.py`), so they show
+  instantly; **Run live** sends the photo to the service again and gives the same
+  result.
+- **Your own photo:** upload a JPEG, PNG or WebP.
+- **Why is it in this group?** Click a product: its crop, detector confidence, its
+  average similarity to the rest of its group against the threshold, and its five
+  most similar crops (dashed in the photo) with their similarity and group.
+- The original next to the service's annotated image, the group list, timings and
+  the raw JSON response.
+
+![The crowded sample: 293 products in 40 groups](docs/screenshots/demo-crowded.jpg)
+
+The sample photos are from Wikimedia Commons: [Grocery store shelves of junk food](https://commons.wikimedia.org/wiki/File:Grocery_store_shelves_of_junk_food.jpg)
+by Cory Doctorow ([CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0)),
+[Faced products on a supermarket shelf](https://commons.wikimedia.org/wiki/File:Faced_products_on_a_supermarket_shelf.JPG)
+by Amnesiac86 ([CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0)) and
+[Honey selection at supermarket](https://commons.wikimedia.org/wiki/File:Honey_selection_at_supermarket.jpeg)
+by culinary123 ([CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0)). The
+annotated versions (boxes added) are under the same licences.
+
+## Docker
+
+```bash
+uv run python tools/download_models.py     # once, into SHELFSCAN_MODELS_DIR on the host
+SHELFSCAN_MODELS_HOST_DIR=~/models/hf docker compose up --build
+# → http://127.0.0.1:8001 (published on this machine only)
+```
+
+- CPU-only image (about 2 GB, nearly all of it PyTorch); the models (~245 MB) are
+  **mounted read-only**, not baked into a layer.
+- Runs as a non-root user; Docker's health check uses `/health`, and `/ready` turns
+  200 once the models load (8 s here).
+- Measured: the container gives exactly the same detections and groups as the local
+  run on the demo samples; about 0.6 GB of memory at rest.
 ## API
 
 | Method and path | Purpose |
 |---|---|
-| `POST /v1/infer` | Multipart form with a `file` field (the shelf photo). Returns the JSON below |
+| `POST /v1/infer` | Multipart form with a `file` field (the shelf photo). Returns the JSON below. `?explain=true` adds, per product, `neighbours` (its 5 most similar crops: index and cosine similarity) and `group_similarity` (its average similarity to the rest of its group) |
 | `GET /v1/outputs/{name}` | The annotated JPEG from a previous call (`annotated_image_url`) |
 | `GET /health`, `GET /ready` | Liveness; readiness (503 until both models are loaded) |
 | `GET /docs` | Interactive OpenAPI documentation |
+| `GET /` | The demo page (sample photos under `/samples/`) |
 | `POST /infer` | The January path, kept as a deprecated alias of `/v1/infer` |
 
 ```json
@@ -235,7 +285,7 @@ through the new API.
   image, while a lossless copy gives identical results. Small pixel changes can
   flip borderline detections and groups.
 - **Latency grows with shelf density**, because every product crop is embedded.
-- Price tags and shelf labels are ignored.
+- Price tags aren't read (no OCR), and are sometimes detected as products.
 ## Repository
 
 ```
@@ -243,7 +293,9 @@ app/          FastAPI app (main.py), settings (config.py), the pipeline with its
 services/     detection/, grouping/, visualization/, images.py (upload decoding)
 schemas/      API request/response models
 tests/        unit tests and API tests (stand-in models, no downloads)
-tools/        download_models.py, create_grid.py (before/after image)
+demo/         the demo page (index.html) and its samples: photos, precomputed results
+tools/        download_models.py, build_demo_samples.py, commons.py, create_grid.py
+Dockerfile, docker-compose.yml   the container (models mounted at run time)
 docs/failures.md            failure gallery (images in docs/failures/, openly licensed)
 eval/         evaluation scripts, results (metrics only), labelling tool
 docs/original-submission/   the January 2026 write-up and JSON format notes

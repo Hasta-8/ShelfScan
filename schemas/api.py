@@ -9,6 +9,11 @@ from pydantic import BaseModel, Field
 BBox = tuple[int, int, int, int]
 
 
+class Neighbour(BaseModel):
+    index: int = Field(description="Position of the other detection in `detections`")
+    similarity: float = Field(description="Cosine similarity of the two crops' embeddings")
+
+
 class Detection(BaseModel):
     bbox: BBox = Field(
         description="[left, top, right, bottom] in pixels of the upright image (EXIF applied)"
@@ -16,6 +21,14 @@ class Detection(BaseModel):
     confidence: float = Field(ge=0, le=1)
     label: Literal["product"] = "product"
     group_id: int = Field(ge=0, description="0 = too small to embed; groups are visual similarity")
+    neighbours: list[Neighbour] | None = Field(
+        default=None, description="explain=true only: the most similar other crops"
+    )
+    group_similarity: float | None = Field(
+        default=None,
+        description="explain=true only: average similarity to the rest of its group "
+        "(what the threshold acts on); null if alone or not embedded",
+    )
 
 
 class GroupSummary(BaseModel):

@@ -18,9 +18,10 @@ from collections import Counter
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, File, Request, UploadFile
+from fastapi import FastAPI, File, Query, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import Settings, get_settings
@@ -69,7 +70,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
 
     app = FastAPI(
         title="ShelfScan",
-        version="0.2.0",
+        version="0.3.0",
         summary="Detects products on a shelf photo and groups the ones that look alike.",
         lifespan=lifespan,
     )
@@ -108,6 +109,16 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
             raise ApiError(503, "not_ready", f"The service is starting ({state['loading']}).")
         return state["engine"]
 
+    demo_dir = Path(settings.demo_dir)
+    if (demo_dir / "samples").is_dir():
+        app.mount("/samples", StaticFiles(directory=demo_dir / "samples"), name="samples")
+
+    @app.get("/", include_in_schema=False)
+    def demo():
+        """The demo page (demo/index.html), or the API docs when it isn't installed."""
+        page = demo_dir / "index.html"
+        return FileResponse(page) if page.is_file() else RedirectResponse("/docs")
+
     @app.get("/health", tags=["ops"])
     def health():
         """Liveness: the process is up."""
@@ -122,7 +133,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
             return _error(request, 503, code, f"The service is starting ({state['loading']}).")
         return {"status": "ready", "models": engine.models, "torch_threads": settings.torch_threads}
 
-    def infer(request: Request, file: UploadFile) -> InferResponse:
+    def infer(request: Request, file: UploadFile, explain: bool = False) -> InferResponse:
         t0 = time.perf_counter()
         engine = ready_engine()
         limit = int(settings.max_upload_mb * 1024 * 1024)
@@ -137,7 +148,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
             raise ApiError(exc.status, exc.code, exc.detail) from None
         t_decoded = time.perf_counter()
         try:
-            detections, timings = engine.run(decoded.image)
+            detections, timings = engine.run(decoded.image, explain_k=5 if explain else 0)
         except Busy:
             raise ApiError(
                 503,
@@ -184,12 +195,30 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
 
     responses = {code: {"model": ErrorResponse} for code in (413, 415, 422, 503)}
 
-    @app.post("/v1/infer", response_model=InferResponse, responses=responses, tags=["inference"])
-    def infer_v1(request: Request, file: UploadFile = File(..., description="Shelf photo")):  # noqa: B008
+    @app.post(
+        "/v1/infer",
+        response_model=InferResponse,
+        response_model_exclude_none=True,  # the explain fields appear only when asked for
+        responses=responses,
+        tags=["inference"],
+    )
+    def infer_v1(
+        request: Request,
+        file: UploadFile = File(..., description="Shelf photo"),  # noqa: B008
+        explain: bool = Query(  # noqa: B008
+            False, description="Add each product's 5 most similar crops and group similarity"
+        ),
+    ):
         """Detect products, group the ones that look alike, return JSON and an annotated image."""
-        return infer(request, file)
+        return infer(request, file, explain)
 
-    @app.post("/infer", response_model=InferResponse, deprecated=True, tags=["inference"])
+    @app.post(
+        "/infer",
+        response_model=InferResponse,
+        response_model_exclude_none=True,
+        deprecated=True,
+        tags=["inference"],
+    )
     def infer_legacy(request: Request, file: UploadFile = File(...)):  # noqa: B008
         """The January endpoint's path; same as /v1/infer."""
         return infer(request, file)

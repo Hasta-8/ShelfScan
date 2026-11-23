@@ -24,7 +24,12 @@ class DetectorLike(Protocol):
 
 class GrouperLike(Protocol):
     def group(
-        self, image: Image.Image, detections: list, similarity_threshold: float, min_crop_px: int
+        self,
+        image: Image.Image,
+        detections: list,
+        similarity_threshold: float,
+        min_crop_px: int,
+        explain_k: int = 0,
     ) -> list: ...
 
 
@@ -40,7 +45,7 @@ class Engine:
     models: dict = field(default_factory=dict)
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False)
 
-    def run(self, image: Image.Image) -> tuple[list[dict], dict[str, float]]:
+    def run(self, image: Image.Image, explain_k: int = 0) -> tuple[list[dict], dict[str, float]]:
         """Detect then group, one request at a time. Returns detections and timings (ms)."""
         s = self.settings
         if not self._lock.acquire(timeout=s.busy_timeout_s):
@@ -49,7 +54,9 @@ class Engine:
             t0 = time.perf_counter()
             dets = self.detector.detect(image, s.confidence_threshold, s.nms_iou)
             t1 = time.perf_counter()
-            dets = self.grouper.group(image, dets, s.similarity_threshold, s.min_crop_px)
+            dets = self.grouper.group(
+                image, dets, s.similarity_threshold, s.min_crop_px, explain_k=explain_k
+            )
             t2 = time.perf_counter()
         finally:
             self._lock.release()

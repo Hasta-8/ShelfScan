@@ -25,8 +25,9 @@ class Settings(BaseSettings):
 
     models_dir: Path = Path(".cache/models")
     output_dir: Path = Path("data/outputs")
+    demo_dir: Path = Path("demo")  # the demo page and its sample photos (optional)
 
-    # Pipeline (the January defaults; not tuned yet, see the tracker's step 3)
+    # Pipeline. Detection thresholds: the January defaults, kept after a sweep (S5).
     confidence_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
     nms_iou: float = Field(default=0.5, ge=0.0, le=1.0)
     # 0.6 since 2026-11-23 (was 0.7): chosen on held-out tune images, pairwise F1 on the

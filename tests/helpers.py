@@ -40,9 +40,15 @@ class FakeDetector:
 
 
 class FakeGrouper:
-    def group(self, image, detections, similarity_threshold=0.7, min_crop_px=20):
+    def group(self, image, detections, similarity_threshold=0.7, min_crop_px=20, explain_k=0):
         for i, d in enumerate(detections):
             x1, y1, x2, y2 = d["bbox"]
             small = (x2 - x1) < min_crop_px or (y2 - y1) < min_crop_px
             d["group_id"] = 0 if small else 1 + i % 2
+        if explain_k:
+            embedded = [i for i, d in enumerate(detections) if d["group_id"]]
+            for i in embedded:
+                others = [j for j in embedded if j != i][:explain_k]
+                detections[i]["neighbours"] = [{"index": j, "similarity": 0.5} for j in others]
+                detections[i]["group_similarity"] = None
         return detections

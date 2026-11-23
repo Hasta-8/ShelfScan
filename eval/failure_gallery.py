@@ -10,11 +10,8 @@ and licences are in docs/failures.md; images from CC BY-SA photos stay CC BY-SA.
 
 from __future__ import annotations
 
-import json
 import sys
 import time
-import urllib.parse
-import urllib.request
 from io import BytesIO
 from pathlib import Path
 
@@ -24,8 +21,8 @@ from app.config import get_settings  # noqa: E402
 from app.engine import build_engine  # noqa: E402
 from services.images import decode_upload  # noqa: E402
 from services.visualization.visualizer import annotate  # noqa: E402
+from tools.commons import thumbnail  # noqa: E402
 
-UA = {"User-Agent": "ShelfScanGallery/0.1 (research script)"}
 # output name -> (Commons file title, crop box in the 1920 px image or None)
 GALLERY = {
     "01-merged-different-products": ("File:Honey selection at supermarket.jpeg", None),
@@ -56,29 +53,13 @@ GALLERY = {
 }
 
 
-def thumb_url(title: str) -> str:
-    q = urllib.parse.urlencode(
-        {
-            "action": "query",
-            "format": "json",
-            "titles": title,
-            "prop": "imageinfo",
-            "iiprop": "url",
-            "iiurlwidth": 1920,
-        }
-    )
-    req = urllib.request.Request("https://commons.wikimedia.org/w/api.php?" + q, headers=UA)
-    page = next(iter(json.load(urllib.request.urlopen(req))["query"]["pages"].values()))
-    return page["imageinfo"][0]["thumburl"]
-
-
 def main() -> None:
     settings = get_settings()
     engine = build_engine(settings)
     out_dir = ROOT / "docs" / "failures"
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, (title, crop) in GALLERY.items():
-        data = urllib.request.urlopen(urllib.request.Request(thumb_url(title), headers=UA)).read()
+        data = thumbnail(title)
         image = decode_upload(data, settings.max_pixels, settings.min_side_px).image
         dets, _ = engine.run(image)
         out = annotate(image, dets, width=6)

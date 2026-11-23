@@ -1,0 +1,56 @@
+[
+ {
+  "id": "easy",
+  "label": "Easy",
+  "title": "Boxed snack cakes, face-on",
+  "look_at": "Face-on boxes with clear outlines: nearly every pack is found, and runs of the same box (Honey Buns, Marshmallow Pies) mostly share a colour.",
+  "image": "samples/easy.jpg",
+  "result": "samples/easy.json",
+  "credit": {
+   "title": "Grocery store shelves of junk food.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Grocery_store_shelves_of_junk_food.jpg",
+   "author": "Cory Doctorow",
+   "licence": "CC BY-SA 2.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/2.0"
+  },
+  "products": 64,
+  "groups": 32,
+  "total_s": 7.1
+ },
+ {
+  "id": "crowded",
+  "label": "Crowded",
+  "title": "A full aisle of soup cans",
+  "look_at": "About 300 products in one photo (about 45 s on a laptop CPU, as every crop is embedded). Small, distant cans at the far end are where detection thins out.",
+  "image": "samples/crowded.jpg",
+  "result": "samples/crowded.json",
+  "credit": {
+   "title": "Faced products on a supermarket shelf.JPG",
+   "page": "https://commons.wikimedia.org/wiki/File:Faced_products_on_a_supermarket_shelf.JPG",
+   "author": "Amnesiac86",
+   "licence": "CC BY-SA 3.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "products": 293,
+  "groups": 40,
+  "total_s": 46.4
+ },
+ {
+  "id": "similar",
+  "label": "Similar packaging",
+  "title": "Honey and syrup in lookalike bottles",
+  "look_at": "Different products in the same bottle shape end up in one group: six Dutch Gold honey varieties, and syrups from two brands. Click one to see why.",
+  "image": "samples/similar.jpg",
+  "result": "samples/similar.json",
+  "credit": {
+   "title": "Honey selection at supermarket.jpeg",
+   "page": "https://commons.wikimedia.org/wiki/File:Honey_selection_at_supermarket.jpeg",
+   "author": "culinary123",
+   "licence": "CC BY-SA 3.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "products": 25,
+  "groups": 8,
+  "total_s": 4.5
+ }
+]

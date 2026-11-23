@@ -11,8 +11,9 @@ different brands can share a group, and variants of one product can be split.
 There is no OCR and no product catalogue.
 
 > **Status:** the pipeline runs end to end behind a hardened FastAPI service, with
-> tests in CI. **Detection is evaluated** (below); **grouping is not yet**, so nothing
-> here claims grouping accuracy. Grouping evaluation, Docker and a demo are next.
+> tests in CI. **Detection and grouping are both evaluated** (below). Detection is
+> solid; **grouping is weak** (pairwise F1 about 0.3 against hand labels), and the
+> numbers say so. Docker and a demo are next.
 
 ## How it works
 
@@ -23,7 +24,7 @@ shelf image
   → grouping: crop each box (crops under 20 px wide or tall are skipped → group 0)
       DINOv2-small CLS embedding per crop, L2-normalised
       agglomerative clustering, cosine distance, average linkage,
-      merge while similarity ≥ 0.7 (distance ≤ 0.3)
+      merge while similarity ≥ 0.6 (distance ≤ 0.4)
   → visualisation: one box colour per group
   → JSON response + annotated image
 ```
@@ -33,8 +34,10 @@ shelf image
 | Detector | [`is36e/detr-resnet-50-sku110k`](https://huggingface.co/is36e/detr-resnet-50-sku110k) (originally published as `isalia99/…`, which now redirects) | `79e15d3` | Apache-2.0 |
 | Embedder | [`facebook/dinov2-small`](https://huggingface.co/facebook/dinov2-small) | `ed25f3a` | Apache-2.0 |
 
-The thresholds (0.8 confidence, 0.5 NMS IoU, 0.7 similarity) are the original
-defaults. They have not been tuned or measured yet; a sensitivity study is planned.
+The thresholds are 0.8 confidence, 0.5 NMS IoU and 0.6 similarity. The detection
+thresholds are the original defaults, kept because a sweep found nothing clearly
+better; the similarity threshold was 0.7 and moved to 0.6 by a rule fixed before
+the sweep (see Grouping quality).
 
 ## Status
 
@@ -49,8 +52,9 @@ defaults. They have not been tuned or measured yet; a sensitivity study is plann
 | Unit and API tests in CI (stand-in models), lint, lock-file check | IMPLEMENTED |
 | Reproducible CPU-only setup: uv lock file, pinned model revisions, shared model folder | IMPLEMENTED |
 | Detection metrics (COCO AP, precision, recall) on SKU-110K test images | IMPLEMENTED (`eval/detection.py`) |
-| Grouping metrics (pairwise F1, ARI) on hand-labelled images; labelling tool | IN PROGRESS (tool built, labelling pending) |
-| Threshold sensitivity study, failure gallery | PLANNED |
+| Grouping metrics (pairwise F1, ARI) on hand-labelled images; labelling tool | IMPLEMENTED (`eval/grouping.py`, `eval/labeler/`) |
+| Threshold sensitivity study (confidence, NMS IoU, similarity) | IMPLEMENTED (`eval/detection_sweep.py`, `eval/grouping.py`) |
+| Failure gallery | PLANNED |
 | Docker, demo, recorded fallback | PLANNED |
 ## Quick start
 
@@ -97,7 +101,7 @@ Tests need no models (the API tests use stand-ins): `uv run pytest`.
   "annotated_image_url": "/v1/outputs/7c1e….jpg",
   "timings": {"decode_ms": 61, "detect_ms": 1990, "group_ms": 3098, "annotate_ms": 57, "total_ms": 5206},
   "models": {"detector": "is36e/detr-resnet-50-sku110k@79e15d3", "embedder": "facebook/dinov2-small@ed25f3a"},
-  "settings": {"confidence_threshold": 0.8, "nms_iou": 0.5, "similarity_threshold": 0.7, "min_crop_px": 20, "torch_threads": 4}
+  "settings": {"confidence_threshold": 0.8, "nms_iou": 0.5, "similarity_threshold": 0.6, "min_crop_px": 20, "torch_threads": 4}
 }
 ```
 
@@ -146,6 +150,44 @@ eval/detection.py <shard.parquet>`.
 - The images can't be shown here: SKU-110K's licence allows non-commercial use only,
   without redistribution.
 
+## Grouping quality (measured)
+
+The grouper was scored on its own, separately from detection: it was run on the
+**annotated** boxes of 14 SKU-110K test images (1,526 boxes; 20 that couldn't be
+judged were left out), and compared with hand labels saying which boxes show the
+same product (same brand, variant and packaging). The labeller never saw the
+model's output. `uv run --group eval python eval/grouping.py <shard.parquet>`.
+
+Pairwise scores ask, for every pair of boxes on a shelf, "are these the same
+product?": precision is how often the grouper is right when it says yes, recall
+is how many of the true same-product pairs it finds.
+
+| Similarity threshold | Pairwise precision | Recall | F1 | Groups per true product |
+|---|---|---|---|---|
+| 0.7 (original) | 0.70 | 0.15 | 0.25 | 2.5 |
+| **0.6 (current)** | 0.50 | 0.23 | 0.32 | 1.6 |
+| 0.5 | 0.28 | 0.36 | 0.32 | 0.9 |
+
+All 14 images. Mean adjusted Rand index at 0.7: 0.26.
+
+- **Weak at every threshold:** no setting gets pairwise F1 much above 0.3. Lowering
+  the threshold merges more true pairs but merges different products at the same
+  rate. DINOv2's overall-appearance embedding doesn't separate products that differ
+  by a flavour or a label; that needs text (OCR) or a model trained for product
+  identity.
+- **How 0.6 was chosen:** the 14 images were split at random into 7 for choosing
+  and 7 for reporting, and the rule (choose on the first 7, adopt only if F1 on the
+  other 7 rises by at least 0.05) was written down before any scoring. On the 7
+  report images F1 went from 0.21 to 0.34. With 7 images that estimate is rough.
+- The original plan was 24 labelled images; labelling stopped at 14, and the
+  split was redone before scoring. The labels stay local (dataset licence).
+
+**Detection thresholds:** precision, recall and F1 were swept over confidence
+0.3–0.95 and NMS IoU 0.3–0.7 on the 420 detection images. F1 varies little
+(0.72–0.82); the best point (confidence 0.9, NMS 0.3) gains 0.018 F1 but loses 3
+points of recall, so under the pre-set rule (+0.02 F1 without losing recall) the
+defaults stay. Raise the confidence threshold if precision matters more than recall.
+
 ## Performance (measured)
 
 On a 4-core Intel i5-10210U laptop CPU, 10 distinct sample shelf photos:
@@ -177,10 +219,11 @@ through the new API.
   annotated image (group colours are derived from the group ID).
 ## Limitations
 
-- **Grouping quality is unmeasured** (labelling in progress). Detection is measured on SKU-110K test images only; other stores, cameras and lighting may differ.
-- **Grouping looks over-split** on dense shelves: the busiest sample has 254
-  products in 121 groups. Whether that is wrong depends on labels that don't exist
-  yet.
+- **Grouping is weak:** pairwise F1 about 0.3 against hand labels (see Grouping
+  quality); treat groups as a rough visual hint, not a count of distinct products.
+  Measured on 14 images of up to ~130 products each, labelled by one person.
+- Both evaluations use SKU-110K test images only; other stores, cameras and
+  lighting may differ.
 - **Visual similarity is not identity:** lookalike packaging from different brands
   can be grouped together, and variants of one product (flavours, sizes) can be split.
 - **Sensitive to re-compression:** re-saving the same photo as JPEG (quality 95)

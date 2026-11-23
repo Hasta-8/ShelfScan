@@ -32,5 +32,28 @@
  "boxes": {
   "tune": 1387,
   "test": 1348
+ },
+ "labelled_resplit": {
+  "date": "2026-11-23",
+  "reason": "labelling stopped at 14/24 images (the user's choice, before any scoring); the labelling order put all 12 original tune images first, leaving 2 test images, so the 14 labelled images are re-split",
+  "rule": "sorted labelled names, random.Random(20261123).shuffle, first 7 tune / last 7 test",
+  "tune": [
+   "test_101.jpg",
+   "test_1089.jpg",
+   "test_1132.jpg",
+   "test_1134.jpg",
+   "test_1157.jpg",
+   "test_1239.jpg",
+   "test_1336.jpg"
+  ],
+  "test": [
+   "test_1020.jpg",
+   "test_104.jpg",
+   "test_117.jpg",
+   "test_1292.jpg",
+   "test_1311.jpg",
+   "test_1343.jpg",
+   "test_1368.jpg"
+  ]
  }
 }

@@ -29,7 +29,9 @@ class Settings(BaseSettings):
     # Pipeline (the January defaults; not tuned yet, see the tracker's step 3)
     confidence_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
     nms_iou: float = Field(default=0.5, ge=0.0, le=1.0)
-    similarity_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
+    # 0.6 since 2026-11-23 (was 0.7): chosen on held-out tune images, pairwise F1 on the
+    # test images 0.21 -> 0.34 (experiment S5, eval/grouping.py).
+    similarity_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
     min_crop_px: int = Field(default=20, ge=1)  # smaller boxes aren't embedded (group 0)
 
     # Results depend slightly on the thread count (floating-point order), so it is fixed.

@@ -5,6 +5,7 @@ __pycache__/
 data/uploads/
 data/outputs/
 data/commons/
+data/video/
 
 # uv environment and local model cache (models live in SHELFSCAN_MODELS_DIR)
 .venv/

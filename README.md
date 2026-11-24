@@ -15,10 +15,13 @@ There is no OCR and no product catalogue.
 > solid; **grouping is weak** (pairwise F1 about 0.3 against hand labels), and the
 > numbers say so. It ships with a demo page and a Docker setup.
 
-![The demo page: a honey jar selected, with its most similar crops and their cosine similarity](docs/screenshots/demo-why-this-group.jpg)
+**▶ [Try the online demo](https://hasta-8.github.io/ShelfScan/)** (precomputed results,
+runs in the browser) · **[90-second walkthrough video](https://github.com/Hasta-8/ShelfScan/releases/tag/v0.3.0)**
 
-*The demo page. One honey jar is selected; its five most similar crops are other Dutch
-Gold varieties, at similarity 0.78–0.89, so different products end up in one group.*
+![The demo page: a honey jar is clicked, and its most similar crops are other honey varieties](docs/screenshots/demo-why.gif)
+
+*One honey jar is selected; its five most similar crops are other Dutch Gold varieties,
+at similarity 0.78–0.89, so different products end up in one group.*
 
 ## How it works
 
@@ -62,7 +65,7 @@ the sweep (see Grouping quality).
 | Failure gallery (openly licensed photos) | IMPLEMENTED ([docs/failures.md](docs/failures.md)) |
 | Demo page: three fixed samples (precomputed + live), your own upload, "why this group" view | IMPLEMENTED (`demo/`) |
 | Docker: CPU-only image, models mounted read-only, non-root, health check | IMPLEMENTED (`Dockerfile`, `docker-compose.yml`) |
-| Recorded demo video (fallback) | PLANNED |
+| Online static demo (GitHub Pages) and a recorded walkthrough video | IMPLEMENTED |
 ## Quick start
 
 Needs Python 3.12 and [uv](https://docs.astral.sh/uv/). Everything runs on the CPU;
@@ -103,6 +106,17 @@ itself (`demo/index.html`, no build step):
   most similar crops (dashed in the photo) with their similarity and group.
 - The original next to the service's annotated image, the group list, timings and
   the raw JSON response.
+
+**Online copy:** https://hasta-8.github.io/ShelfScan/ serves the same page from GitHub
+Pages (`.github/workflows/pages.yml` publishes `demo/`). With no API behind it, the
+page shows the precomputed samples, including the "why this group" view; live runs
+and uploads need a local run.
+
+**Walkthrough video** (90 s, attached to the
+[v0.3.0 release](https://github.com/Hasta-8/ShelfScan/releases/tag/v0.3.0)): recorded
+automatically with Playwright from the local demo, including one live run.
+
+![The demo page: a honey jar selected, with its most similar crops](docs/screenshots/demo-why-this-group.jpg)
 
 ![The crowded sample: 293 products in 40 groups](docs/screenshots/demo-crowded.jpg)
 

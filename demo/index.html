@@ -69,7 +69,7 @@
   <span class="sub">detect products on a shelf photo, group the ones that look alike</span>
   <span id="ready" class="pill">checking…</span>
   <nav class="small">
-    <a href="/docs">API docs</a>
+    <a id="docs" href="/docs">API docs</a>
     <a href="https://github.com/Hasta-8/ShelfScan#grouping-quality-measured" target="_blank" rel="noopener">Measured quality</a>
     <a href="https://github.com/Hasta-8/ShelfScan/blob/main/docs/failures.md" target="_blank" rel="noopener">Failure gallery</a>
   </nav>
@@ -80,9 +80,9 @@
     <div class="card">
       <h2>Samples</h2>
       <div id="samples" class="stack"></div>
-      <p class="small muted" style="margin:10px 0 0">Results appear instantly (computed in advance by the same API). <b>Run live</b> sends the photo to the service now.</p>
+      <p id="samplenote" class="small muted" style="margin:10px 0 0">Results appear instantly (computed in advance by the same API). <b>Run live</b> sends the photo to the service now.</p>
     </div>
-    <div class="card">
+    <div class="card" id="upload">
       <h2>Your photo</h2>
       <input id="file" type="file" accept="image/jpeg,image/png,image/webp">
       <p class="small muted" style="margin:6px 0 0">JPEG, PNG or WebP, up to 15 MB. Not stored; only the annotated image is kept. Face-on shelf photos work best.</p>
@@ -130,7 +130,7 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-let samples = [], current = null, result = null, img = null, selected = -1, highlight = null, liveFile = null;
+let staticMode = false, samples = [], current = null, result = null, img = null, selected = -1, highlight = null, liveFile = null;
 
 // Same colours as services/visualization/visualizer.py: golden-ratio hue steps, HSV(h, .85, .95).
 function colour(g) {
@@ -142,16 +142,31 @@ function colour(g) {
 }
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
+// Served without the API (e.g. GitHub Pages): no /ready JSON. Show the precomputed
+// samples only; live runs and uploads need the service (README: Quick start or Docker).
+function enterStatic() {
+  staticMode = true;
+  const el = $("ready"); el.textContent = "static demo: precomputed results"; el.className = "pill";
+  $("docs").hidden = true; $("live").hidden = true;
+  $("samplenote").innerHTML = `This online copy shows results computed in advance by the real API. To run the
+    models live or upload your own photo, run ShelfScan locally:
+    <a href="https://github.com/Hasta-8/ShelfScan#quick-start" target="_blank" rel="noopener">Quick start</a> or
+    <a href="https://github.com/Hasta-8/ShelfScan#docker" target="_blank" rel="noopener">Docker</a>.`;
+  $("upload").hidden = true;
+}
+
 async function pollReady() {
-  try {
-    const r = await fetch("/ready");
+  let r;
+  try { r = await fetch("/ready", { cache: "no-store" }); } catch { return enterStatic(); }
+  if (!(r.headers.get("content-type") || "").includes("application/json")) return enterStatic();
+  {
     const el = $("ready");
     if (r.ok) { el.textContent = "models ready"; el.className = "pill ok"; return; }
     const b = await r.json().catch(() => ({}));
     el.textContent = b.error === "startup_failed" ? "model loading failed" : "loading models…";
     el.className = "pill " + (b.error === "startup_failed" ? "bad" : "warn");
     if (b.error !== "startup_failed") setTimeout(pollReady, 2000);
-  } catch { setTimeout(pollReady, 3000); }
+  }
 }
 
 async function loadSamples() {
@@ -177,7 +192,7 @@ async function openSample(id, box = -1) {
   const c = s.credit;
   $("credit").innerHTML = `Photo: <a href="${c.page}" target="_blank" rel="noopener">${esc(c.title)}</a> by ${esc(c.author)},
     <a href="${c.licence_url}" target="_blank" rel="noopener">${esc(c.licence)}</a>, via Wikimedia Commons; boxes added by ShelfScan.`;
-  $("live").disabled = false;
+  $("live").disabled = staticMode;
   msg("precomputed result", false);
   const res = await (await fetch(s.result)).json();
   await show(s.image, res, box);

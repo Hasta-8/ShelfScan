@@ -16,7 +16,7 @@ There is no OCR and no product catalogue.
 > numbers say so. It ships with a demo page and a Docker setup.
 
 **▶ [Try the online demo](https://hasta-8.github.io/ShelfScan/)** (precomputed results,
-runs in the browser) · **[90-second walkthrough video](https://github.com/Hasta-8/ShelfScan/releases/tag/v0.3.0)**
+runs in the browser) · **[90-second walkthrough video](https://youtu.be/tzosflpDz_M)**
 
 ![The demo page: a honey jar is clicked, and its most similar crops are other honey varieties](docs/screenshots/demo-why.gif)
 
@@ -112,9 +112,10 @@ Pages (`.github/workflows/pages.yml` publishes `demo/`). With no API behind it, 
 page shows the precomputed samples, including the "why this group" view; live runs
 and uploads need a local run.
 
-**Walkthrough video** (90 s, attached to the
+**[Walkthrough video](https://youtu.be/tzosflpDz_M)** (90 s; also attached to the
 [v0.3.0 release](https://github.com/Hasta-8/ShelfScan/releases/tag/v0.3.0)): recorded
-automatically with Playwright from the local demo, including one live run.
+automatically with Playwright from the local demo, including one live run. If live
+inference fails during a demo, this is the fallback.
 
 ![The demo page: a honey jar selected, with its most similar crops](docs/screenshots/demo-why-this-group.jpg)
 

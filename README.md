@@ -114,9 +114,7 @@ and uploads need a local run.
 
 **[Narrated walkthrough video](https://youtu.be/p2lKjtaSrEc)** (under 2 min): recorded
 automatically with Playwright from the local demo, including one live run (sped up 4×,
-and the caption says so). An earlier silent version is attached to the
-[v0.3.0 release](https://github.com/Hasta-8/ShelfScan/releases/tag/v0.3.0). If live
-inference fails during a demo, this is the fallback.
+and the caption says so). If live inference fails during a demo, this is the fallback.
 
 ![The demo page: a honey jar selected, with its most similar crops](docs/screenshots/demo-why-this-group.jpg)
 
